@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+body {
+    font: 10px sans-serif;
+}
+/*
+.grid line {
+    stroke: lightgrey;
+    stroke-opacity: 0.4;
+      shape-rendering: crispEdges;
+}
+ */
+.bar {
+     fill: blue;
+}
+.bar:hover {
+     fill: rgb(160, 221, 103) ;
+}
+.toolTip {
+    position: absolute;
+    border-radius: 4px 4px 4px 4px;
+    font-weight: bold;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    min-width: 100px;
+}
+.toolTip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    color: rgba(0, 0, 0, 0.8);
+    content: "\25BC";
+    position: absolute;
+    left: 0px;
+    top: 35px;
+    text-align: center;
+}
+.toolTip.n:after {
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+}
+</style>
+<body>
+<svg style="width:960px; height:550px; border:0px solid;"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+ 
+var margin     = {top: 60, right: 20, bottom: 40, left: 40};
+var formatPercent = d3.format(".0%");
+var svg = d3.select("svg");
+var width     = parseInt(svg.style("width"), 10) - margin.left - margin.right;
+var height     = parseInt(svg.style("height"), 10) - margin.top - margin.bottom;
+var xScale = d3.scaleBand()
+    .rangeRound([0, width], .1).padding(0.2);
+var yScale = d3.scaleLinear()
+    .rangeRound([height, 0]);
+var svgG = svg.append("g")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+var tooltip = d3.select("body").append("div")
+    .attr("class", "toolTip")
+    .style("display", "none");
+ 
+ 
+ 
+d3.tsv("./js/data.tsv", type, function(error, data) {
+    xScale.domain(data.map(function(d) { return d.letter; }));
+    yScale.domain([0, d3.max(data, function(d) { return d.frequency; })]);
+ 
+      svgG.append("g")
+              .attr("transform", "translate(0," + height + ")")
+              .call(d3.axisBottom(xScale)
+                      .tickSize(5)//
+                      .tickPadding(5)//
+                      );
+ 
+      svgG.append("g")
+          .call(d3.axisLeft(yScale)
+              .ticks(10)
+              .tickSize(10)//
+              .tickPadding(5)//
+              .tickFormat(formatPercent)
+              );
+ 
+      svgG.append("text")//
+          .attr("transform", "rotate(-90)")
+          .attr("yScale", 10)
+          .attr("dy", "1.3em")
+          .style("text-anchor", "end")
+          .text("Frequency" + "    ");
+ 
+    var barG = svgG.append("g");
+ 
+     barG.selectAll("rect")
+          .data(data)
+          .enter().append("rect")
+          .attr("class", "bar")
+          .attr("height", function(d, i) { return height - yScale(d.frequency)})
+          .attr("width", xScale.bandwidth())
+          .attr("x", function(d, i) { return xScale(d.letter); })
+          .attr("y", function(d, i) { return yScale(d.frequency); })
+          .on("mouseover", function() { tooltip.style("display", "block"); })
+          .on("mouseout",  function() { tooltip.style("display", "none"); })
+          .on("mousemove", function(d) {
+              tooltip.style("left", (xScale(d.letter) + xScale.bandwidth()/2 - 15 ) + "px");
+              tooltip.style("top", (yScale(d.frequency) +  15) + "px");
+              tooltip.html("<strong>Frequency:</strong> <span style='color:#3162C7; font-size: 1.2em;'>" 
++ d.frequency + "</span>");
+          });
+ 
+      });
+ 
+function type(d) {
+    d.frequency = d.frequency;
+ 
+      return d;
+}
+ 
+</script>
